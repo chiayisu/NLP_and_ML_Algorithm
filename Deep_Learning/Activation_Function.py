@@ -31,3 +31,18 @@ class Relu:
     def backward(self, dout):
         dout[self.x <= 0] = 0
         return dout
+
+class tanh:
+    def __init__(self):
+        self.params, self.grads = [], []
+        self.output = None
+    
+    def forward(self, x):
+        numerator = np.exp(x) - np.exp(-x)
+        denominator = np.exp(x) + np.exp(-x)
+        self.output = numerator / denominator
+        return self.output
+
+    def backward(self, dout):
+        dout = dout * (1 - np.square(self.output))
+        return dout
