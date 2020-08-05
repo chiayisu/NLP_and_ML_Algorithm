@@ -21,7 +21,7 @@ class RNN:
         self.W_h = np.random.randn(hidden_size, hidden_size)
         self.W_x = np.random.randn(input_size, hidden_size)
         self.b = np.random.randn(batch_size, hidden_size)
-        self.params = [self.W_h, self.W_x, b]
+        self.params = [self.W_h, self.W_x, self.b]
         self.tanh = tanh()
         self.h_t = None
         self.h_t_minus_1 = None
