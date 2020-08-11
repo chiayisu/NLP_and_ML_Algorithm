@@ -5,39 +5,6 @@ def Sigmoid(x):
     out = 1 / (1 + np.exp(-x))
     return 1 / (1 + np.exp(-x))
 
-##def Softmax(x):
-##    denominator = np.sum(np.exp(x), axis = 1)
-##    denominator = denominator[:, np.newaxis]
-##    return np.exp(x) / np.exp(denominator)
-##
-##def CrossEntropyLoss(y, y_hat):
-##    N = y.shape[0]
-##    pos_log_probability = np.log(y_hat[0])
-##    total_loss = np.sum(pos_log_probability)
-##    total_loss += np.log(1-y_hat[1:])
-##    total_loss = total_loss * -1 
-##    return total_loss / N
-##
-##class LossFunction:
-##    def __init__(self):
-##        self.params = []
-##        self.y_hat = None
-##        self.y = None
-##    
-##    def forward(self, x, y):
-##        y_hat = Sigmoid(x)
-##        self.y = y
-##        self.y_hat = y_hat
-##        loss = CrossEntropyLoss(y, y_hat)
-##        return loss
-##
-##    def backward(self, dout=1):
-##        dimension = self.y_hat.shape[0]
-##        dx = self.y - self.y_hat
-##        dx = dout * dx
-##        dx /= dimension
-##        return dx
-
 class SGD:
     def __init__(self, lr = 0.01):
         self.lr = lr
