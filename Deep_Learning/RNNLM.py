@@ -91,14 +91,15 @@ class RNNLM:
         predicted_word = np.argmax(y_hat, axis=1)
         return predicted_word, h_t, loss
     
-    def backward(self, dout = 1):
+    def backward(self, dhnext, dout = 1):
         self.grads = []
         dx = self.loss_layer.backward()
         dx = self.RNNLM[2].backward(dx)
-        d_h_minus_1, dx = self.RNNLM[1].backward(dx)
+        dhnext, dx = self.RNNLM[1].backward(dhnext + dx)
         dx = self.RNNLM[0].backward(dx)
         for layer in reversed(self.RNNLM):
             self.grads.append(layer.grads)
+        return dhnext
 
 class Time_RNNLM:
     def __init__(self, input_size, hidden_size, batch_size, vocabuary_size, embedding_matrix, sequence_length):
@@ -119,8 +120,9 @@ class Time_RNNLM:
         return self.predicted_word_list, LOSS
 
     def backward(self):
+        dhnext = 0
         for reversed_rnnlm in reversed(self.rnnlm):
-            reversed_rnnlm.backward(1)
+            dhnext = reversed_rnnlm.backward(dhnext, 1)
 
 
 h_t_minus_one = np.random.randn(1, 3)
