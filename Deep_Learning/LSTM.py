@@ -91,16 +91,44 @@ class LSTM:
         dx = np.dot(dA, self.W_h.T)
         
         return dcprev, dhprev, dx
-        
+
+class Time_LSTM:
+    def __init__(self, input_size, hidden_size, batch_size, sequence_length):
+        self.lstm = []
+        self.h_t_list = []
+        self.c_t_list = []
+        for _ in range(sequence_length):
+            self.lstm.append(LSTM(input_size, hidden_size, batch_size))
+
+    def forward(self, x, h_t_minus_1, c_minus_1):
+        self.h_t_list = []
+        self.c_t_list = []
+        for index, x_t in enumerate(x):
+            h_t_minus_1, c_t_minus_1 = self.lstm[index].forward(x_t, h_t_minus_1, c_minus_1)
+            self.h_t_list.append(h_t_minus_1)
+            self.c_t_list.append(c_t_minus_1)
+        return self.h_t_list, self.c_t_list
+
+    def backward(self, dhnext, dcnext):
+        for reversed_rnn in reversed(self.lstm):
+            dcnext, dhnext, dx = reversed_rnn.backward(dhnext, dcnext)
+        return dcnext, dhnext, dx        
         
 
 
-lstm = LSTM(3, 3, 2)
-x = np.array([[1, 2, 3], [1, 2, 3]])
-h_t_minus_1 = np.random.randn(2, 3)
-c_t_minus_1 = np.random.randn(2, 3)
-lstm.forward(x, h_t_minus_1, c_t_minus_1)
-lstm.backward(h_t_minus_1, c_t_minus_1)
+##lstm = LSTM(3, 3, 2)
+##x = np.array([[1, 2, 3], [1, 2, 3]])
+##h_t_minus_1 = np.random.randn(2, 3)
+##c_t_minus_1 = np.random.randn(2, 3)
+##lstm.forward(x, h_t_minus_1, c_t_minus_1)
+##lstm.backward(h_t_minus_1, c_t_minus_1)
+
+##h_t_minus_1 = np.random.randn(2, 3)
+##c_t_minus_1 = np.random.randn(2, 3)
+##x = np.array([[[1, 2, 3], [1, 2, 3]]])
+##rnn = Time_LSTM(3, 3, 2, 1)
+##h, c = rnn.forward(x, h_t_minus_1, c_t_minus_1)
+##rnn.backward(1, 1)
 
 
 

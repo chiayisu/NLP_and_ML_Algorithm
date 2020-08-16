@@ -72,12 +72,11 @@ class Time_RNN:
 ##y = rnn.forward(x, h_t_minus_1)
 ##grads = rnn.backward(y)
 
-##h_t_minus_1 = np.random.randn(2, 3)
-##x = np.array([[[1, 2, 3], [1, 2, 3]]])
-##rnn = Time_RNN(3, 3, 2, 1)
-##h_last = rnn.forward(x, h_t_minus_1)
-##print(h_last)
-##rnn.backward(h_last)
+h_t_minus_1 = np.random.randn(2, 3)
+x = np.array([[[1, 2, 3], [1, 2, 3]]])
+rnn = Time_RNN(3, 3, 2, 1)
+h_last = rnn.forward(x, h_t_minus_1)
+rnn.backward(1)
 
 
 
