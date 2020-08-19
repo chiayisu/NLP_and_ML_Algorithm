@@ -16,12 +16,12 @@ class tanh:
         return dout
 
 class RNN:
-    def __init__(self, input_size, hidden_size, batch_size = 1):
-        self.grads = []
-        self.W_h = np.random.randn(hidden_size, hidden_size)
-        self.W_x = np.random.randn(input_size, hidden_size)
-        self.b = np.random.randn(batch_size, hidden_size)
+    def __init__(self, W_h, W_x, b):
+        self.W_h = W_h.copy()
+        self.W_x = W_x.copy()
+        self.b = b.copy()
         self.params = [self.W_h, self.W_x, self.b]
+        self.grads = []
         self.tanh = tanh()
         self.h_t = None
         self.h_t_minus_1 = None
@@ -47,11 +47,13 @@ class RNN:
         return d_h_minus_1, dx
 
 class Time_RNN:
-    def __init__(self, input_size, hidden_size, batch_size, sequence_length):
+    def __init__(self, W_h, W_x, b, sequence_length):
+        self.params = [W_h, W_x, b]
+        self.grads = [np.zeros_like(W_h), np.zeros_like(W_x), np.zeros_like(b)]
         self.rnn = []
         self.h_t_list = []
         for _ in range(sequence_length):
-            self.rnn.append(RNN(input_size, hidden_size, batch_size))
+            self.rnn.append(RNN(W_h, W_x, b))
 
     def forward(self, x, h_t_minus_1):
         self.h_t_list = []
@@ -61,20 +63,29 @@ class Time_RNN:
         return self.h_t_list
 
     def backward(self, dnext):
+        W_h, W_x, b = self.params
+        self.grads = [np.zeros_like(W_h), np.zeros_like(W_x), np.zeros_like(b)]
         for reversed_rnn in reversed(self.rnn):
             dnext, dx = reversed_rnn.backward(dnext)
+            self.grads += reversed_rnn.grads
         return dnext, dx 
 
+input_size = 3
+hidden_size = 3
+batch_size = 2
 
-##h_t_minus_1 = np.random.randn(2, 3)
+W_h = np.random.randn(hidden_size, hidden_size)
+W_x = np.random.randn(input_size, hidden_size)
+b = np.random.randn(batch_size, hidden_size)
+h_t_minus_1 = np.random.randn(2, 3)
 ##x = np.array([[1, 2, 3], [1, 2, 3]])
-##rnn = RNN(3, 3, 2)
+
+##rnn = RNN(W_h, W_x, b)
 ##y = rnn.forward(x, h_t_minus_1)
 ##grads = rnn.backward(y)
 
-h_t_minus_1 = np.random.randn(2, 3)
 x = np.array([[[1, 2, 3], [1, 2, 3]]])
-rnn = Time_RNN(3, 3, 2, 1)
+rnn = Time_RNN(W_h, W_x, b, 1)
 h_last = rnn.forward(x, h_t_minus_1)
 rnn.backward(1)
 

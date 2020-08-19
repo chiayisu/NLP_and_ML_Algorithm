@@ -28,12 +28,12 @@ class Sigmoid:
         return dout * self.out * (1 - self.out)
 
 class LSTM:
-    def __init__(self, input_size, hidden_size, batch_size = 1):
+    def __init__(self, Wh, Wx, b):
         self.grads = []
-        self.hidden_size = hidden_size
-        self.W_h = np.random.randn(hidden_size, 4 * hidden_size)
-        self.W_x = np.random.randn(input_size, 4 * hidden_size)
-        self.b = np.random.randn(batch_size, 4 * hidden_size)
+        self.hidden_size = Wh.shape[0]
+        self.W_h = Wh.copy()
+        self.W_x = Wx.copy()
+        self.b = b.copy()
         self.params = [self.W_x, self.W_h, self.b]
         self.c_t = None
         self.h_t = None
@@ -93,47 +93,63 @@ class LSTM:
         return dcprev, dhprev, dx
 
 class Time_LSTM:
-    def __init__(self, input_size, hidden_size, batch_size, sequence_length):
+    def __init__(self, Wh, Wx, b, sequence_length):
         self.lstm = []
+        self.params = [Wh, Wx, b]
+        self.grads = [np.zeros_like(Wh), np.zeros_like(Wx), np.zeros_like(b)]
         self.h_t_list = []
         self.c_t_list = []
         for _ in range(sequence_length):
-            self.lstm.append(LSTM(input_size, hidden_size, batch_size))
-
+            self.lstm.append(LSTM(Wh, Wx, b))
+            
     def forward(self, x, h_t_minus_1, c_minus_1):
         self.h_t_list = []
         self.c_t_list = []
         for index, x_t in enumerate(x):
+            print(index)
             h_t_minus_1, c_t_minus_1 = self.lstm[index].forward(x_t, h_t_minus_1, c_minus_1)
             self.h_t_list.append(h_t_minus_1)
             self.c_t_list.append(c_t_minus_1)
         return self.h_t_list, self.c_t_list
 
     def backward(self, dhnext, dcnext):
+        Wh, Wx, b = self.params
+        self.grads = [np.zeros_like(Wh), np.zeros_like(Wx), np.zeros_like(b)]
         for reversed_rnn in reversed(self.lstm):
             dcnext, dhnext, dx = reversed_rnn.backward(dhnext, dcnext)
+            self.grads += reversed_rnn.grads
         return dcnext, dhnext, dx        
         
+##class SGD:
+##    def __init__(self, lr = 0.01):
+##        self.lr = lr
+##
+##    def update(self, params, grads):
+##        for i in range(len(params)):
+##            params[i] -= self.lr * grads[i]
 
-
-##lstm = LSTM(3, 3, 2)
-##x = np.array([[1, 2, 3], [1, 2, 3]])
+##input_size = 3
+##hidden_size = 3
+##batch_size = 2
+##
+##W_h = np.random.randn(hidden_size, 4 * hidden_size)
+##W_x = np.random.randn(input_size, 4 * hidden_size)
+##b = np.random.randn(batch_size, 4 * hidden_size)
 ##h_t_minus_1 = np.random.randn(2, 3)
 ##c_t_minus_1 = np.random.randn(2, 3)
+            
+##lstm = LSTM(W_h, W_x, b)
+##x = np.array([[1, 2, 3], [1, 2, 3]])
 ##lstm.forward(x, h_t_minus_1, c_t_minus_1)
 ##lstm.backward(h_t_minus_1, c_t_minus_1)
 
-##h_t_minus_1 = np.random.randn(2, 3)
-##c_t_minus_1 = np.random.randn(2, 3)
+
 ##x = np.array([[[1, 2, 3], [1, 2, 3]]])
-##rnn = Time_LSTM(3, 3, 2, 1)
+##rnn = Time_LSTM(W_h, W_x, b, 1)
 ##h, c = rnn.forward(x, h_t_minus_1, c_t_minus_1)
 ##rnn.backward(1, 1)
-
-
-
-
-
+##optimizer = SGD()
+##optimizer.update(rnn.params, rnn.grads)
 
 
 
