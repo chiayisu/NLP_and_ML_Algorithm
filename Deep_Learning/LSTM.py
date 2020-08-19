@@ -88,7 +88,7 @@ class LSTM:
         db = dA.copy()
         self.grads = [dWx, dWh, db]
         dhprev = np.dot(dA, self.W_h.T)
-        dx = np.dot(dA, self.W_h.T)
+        dx = np.dot(dA, self.W_x.T)
         
         return dcprev, dhprev, dx
 
@@ -106,7 +106,6 @@ class Time_LSTM:
         self.h_t_list = []
         self.c_t_list = []
         for index, x_t in enumerate(x):
-            print(index)
             h_t_minus_1, c_t_minus_1 = self.lstm[index].forward(x_t, h_t_minus_1, c_minus_1)
             self.h_t_list.append(h_t_minus_1)
             self.c_t_list.append(c_t_minus_1)
@@ -114,11 +113,17 @@ class Time_LSTM:
 
     def backward(self, dhnext, dcnext):
         Wh, Wx, b = self.params
+        dx_list = []
+        dcnext_list = []
+        dhnext_list = []
         self.grads = [np.zeros_like(Wh), np.zeros_like(Wx), np.zeros_like(b)]
         for reversed_rnn in reversed(self.lstm):
             dcnext, dhnext, dx = reversed_rnn.backward(dhnext, dcnext)
             self.grads += reversed_rnn.grads
-        return dcnext, dhnext, dx        
+            dx_list.append(dx)
+            dcnext_list.append(dcnext)
+            dhnext_list.append(dhnext)
+        return dcnext_list, dhnext_list, dx_list        
         
 ##class SGD:
 ##    def __init__(self, lr = 0.01):
@@ -147,7 +152,7 @@ class Time_LSTM:
 ##x = np.array([[[1, 2, 3], [1, 2, 3]]])
 ##rnn = Time_LSTM(W_h, W_x, b, 1)
 ##h, c = rnn.forward(x, h_t_minus_1, c_t_minus_1)
-##rnn.backward(1, 1)
+##dcnext, dhnext, dx = rnn.backward(1, 0)
 ##optimizer = SGD()
 ##optimizer.update(rnn.params, rnn.grads)
 
