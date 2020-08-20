@@ -95,8 +95,8 @@ class LSTM:
 class Time_LSTM:
     def __init__(self, Wh, Wx, b, sequence_length):
         self.lstm = []
-        self.params = [Wh, Wx, b]
-        self.grads = [np.zeros_like(Wh), np.zeros_like(Wx), np.zeros_like(b)]
+        self.params = [Wx, Wh, b]
+        self.grads = [np.zeros_like(Wx), np.zeros_like(Wh), np.zeros_like(b)]
         self.h_t_list = []
         self.c_t_list = []
         for _ in range(sequence_length):
@@ -112,14 +112,16 @@ class Time_LSTM:
         return self.h_t_list, self.c_t_list
 
     def backward(self, dhnext, dcnext):
-        Wh, Wx, b = self.params
+        Wx, Wh, b = self.params
         dx_list = []
         dcnext_list = []
         dhnext_list = []
-        self.grads = [np.zeros_like(Wh), np.zeros_like(Wx), np.zeros_like(b)]
+        self.grads = [np.zeros_like(Wx), np.zeros_like(Wh), np.zeros_like(b)]
         for reversed_rnn in reversed(self.lstm):
             dcnext, dhnext, dx = reversed_rnn.backward(dhnext, dcnext)
-            self.grads += reversed_rnn.grads
+            self.grads[0] += reversed_rnn.grads[0]
+            self.grads[1] += reversed_rnn.grads[1]
+            self.grads[2] += reversed_rnn.grads[2]
             dx_list.append(dx)
             dcnext_list.append(dcnext)
             dhnext_list.append(dhnext)
