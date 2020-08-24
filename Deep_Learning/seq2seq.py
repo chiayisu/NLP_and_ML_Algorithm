@@ -1,6 +1,3 @@
-##import sys
-##sys.path.append("..")
-
 from LSTM import Time_LSTM, LSTM
 import numpy as np
 
@@ -154,6 +151,63 @@ class Decoder:
             self.grads.append(self.affine_layer[index].grads[0])
             self.grads.append(self.affine_layer[index].grads[1])
         return dhnext
+
+class PeekyDecoder:
+    def __init__(self, W_h, W_x, b, sequence_size, vocab_size, embedding_matrix):
+        self.params = [W_x, W_h, b]
+        self.grads = []
+        self.embedding_layer = []
+        self.lstm = []
+        self.affine_layer = []
+        self.loss_layer = []
+        self.sequence_size = sequence_size
+        hidden_size = W_h.shape[0] * 2
+        self.embbed_dim = embedding_matrix.shape[1]
+        for _ in range(sequence_size):
+            self.embedding_layer.append(Embedding_Layer(embedding_matrix))
+            self.lstm.append(LSTM(W_h, W_x, b))
+            self.affine_layer.append(Affine(hidden_size, vocab_size))
+            self.loss_layer.append(SoftmaxwithLoss())
+            
+    def forward(self, x, h_t_minus_1, c_minus_1, y):
+        LOSS = 0
+        y_list = []
+        h_encoder = h_t_minus_1.copy()
+        for index in range(self.sequence_size):
+            embedding = self.embedding_layer[index].forward(x)
+            self.params.append(self.embedding_layer[index].params)
+            h_t_minus_1, c_minus_1 = self.lstm[index].forward(np.concatenate((embedding, h_t_minus_1), axis=1), h_t_minus_1, c_minus_1)
+            affine_input = np.concatenate((h_encoder, h_t_minus_1), axis=1)
+            affine = self.affine_layer[index].forward(affine_input)
+            self.params.append(self.affine_layer[index].params[0])
+            self.params.append(self.affine_layer[index].params[1])
+            y_hat, loss = self.loss_layer[index].forward(affine, y[index])
+            LOSS += loss
+            x = np.array(np.argmax(y_hat, axis = 1))
+            y_list.append(x)
+        return y_list, LOSS
+    
+    def backward(self, dhnext, dcnext, dout = 1):
+        Wx, Wh, b = self.params[0], self.params[1], self.params[2]
+        hidden_dim = Wh.shape[0]
+        self.grads = [np.zeros_like(Wx), np.zeros_like(Wh), np.zeros_like(b)]
+        dh_list = []
+        dc_list = []
+        last_index = self.sequence_size - 1
+        for index in range(last_index, -1, -1):
+            dout = self.loss_layer[index].backward(dout)
+            dout = self.affine_layer[index].backward(dout)
+            dout = dout[:,:hidden_dim]
+            dcnext, dhnext, dx = self.lstm[index].backward(dhnext + dout, dcnext)
+            self.grads[0] += self.lstm[index].grads[0]
+            self.grads[1] += self.lstm[index].grads[1]
+            self.grads[2] += self.lstm[index].grads[2]
+            self.embedding_layer[index].backward(dx[:,:self.embbed_dim])
+        for index in range(self.sequence_size):
+            self.grads.append(self.embedding_layer[index].grads)
+            self.grads.append(self.affine_layer[index].grads[0])
+            self.grads.append(self.affine_layer[index].grads[1])
+        return dhnext
         
 class Seq2Seq:
     def __init__(self, EN_W_h, EN_W_x, EN_b, DE_W_h, DE_W_x, DE_b, EN_sequence_size, DE_sequence_Size, vocab_size, encoder_embedding_matrix, decoder_embedding_matrix):
@@ -207,10 +261,32 @@ input_word_en = np.array([[0, 0], [0, 1], [2, 0]])
 ##print(len(rnn.params))
 ##rnn.backward(1, 1)
 
+
+
+
+peeky_W_h = np.random.randn(hidden_size, 4 * hidden_size)
+peeky_W_x = np.random.randn(input_size + hidden_size, 4 * hidden_size)
+peeky_b = np.random.randn(batch_size, 4 * hidden_size)
+
+h_t_minus_one = np.random.randn(2, 3)
+c_t_minus_one = np.random.randn(2, 3)
+## PeekyDecoder Test
+input_word = np.array([0, 0])
+rnn = PeekyDecoder(peeky_W_h, peeky_W_x, b, 2, 3, a)
+rnn.forward(input_word, h_t_minus_one, c_t_minus_one, y)
+rnn.backward(0, 0)
+
+
+
+
 ## seq2seq
-seq2seq = Seq2Seq(W_h, W_x, b, W_h, W_x, b, 2, 2, 3, a, a)
-y_list, loss = seq2seq.forward(input_word_en, input_word, h_t_minus_one, c_t_minus_one, y)
-seq2seq.backward()
+##seq2seq = Seq2Seq(W_h, W_x, b, W_h, W_x, b, 2, 2, 3, a, a)
+##y_list, loss = seq2seq.forward(input_word_en, input_word, h_t_minus_one, c_t_minus_one, y)
+##seq2seq.backward()
+
+
+
+
 
 
 
