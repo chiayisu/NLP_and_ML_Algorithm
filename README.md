@@ -1,6 +1,6 @@
 # NLP_and_ML_Algorithm
 
-# Reference
+# References
 - 斎藤康毅, Deep Learning 2: 用Python進行自然語言處理的基礎理論實作.
 - CS224n: Natural Language Processing with Deep Learning, Stanford University.
 - Raschka, Naive Bayes and Text Classification I - Introduction and Theory.
